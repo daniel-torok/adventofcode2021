@@ -28,6 +28,15 @@ def functional_solution(lines):
   return counter
 
 
+def sum_using_sliding_window(lines):
+  result = []
+  for idx in range(len(lines) - 2):
+    next = sum(lines[idx : idx + 3])
+    result.append(next)
+  
+  return result
+
+
 def main():
   import timeit
 
@@ -41,6 +50,16 @@ def main():
   procedural_result = procedural_solution(lines)
   time = timeit.timeit(lambda: procedural_solution(lines), number=1_0000)
   print(f"Result via 'procedural' way: { procedural_result }, took: { time } ms.")
+
+  # part two
+  lines = sum_using_sliding_window(lines)
+  time = timeit.timeit(lambda: sum_using_sliding_window(lines), number=1_0000)
+  print(f"Transforming input took: { time } ms.")
+
+  functional_result = functional_solution(lines)
+  print(f"Result via 'functional' way: { functional_result }.")
+  procedural_result = procedural_solution(lines)
+  print(f"Result via 'procedural' way: { procedural_result }.")
 
 
 if __name__ == "__main__":
