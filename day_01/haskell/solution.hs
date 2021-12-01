@@ -22,7 +22,7 @@ readInt = read
 main :: IO ()
 main = do
   contents <- readFile "input.data"
-  let numbers = map readInt $words contents
+  let numbers = map readInt $ words contents
   let resultPartOne = numberOfDecreases numbers
   print resultPartOne
   let alteredNumbers = slidingWindow numbers

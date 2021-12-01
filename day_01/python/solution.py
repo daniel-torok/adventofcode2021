@@ -1,7 +1,7 @@
 def read(src):
-    import os, sys
-    with open(os.path.join(sys.path[0], src), "r") as f:
-      return f.read().splitlines()
+  import os, sys
+  with open(os.path.join(sys.path[0], src), "r") as f:
+    return f.read().splitlines()
 
 
 def procedural_solution(lines):
@@ -17,14 +17,14 @@ def procedural_solution(lines):
 
 def functional_solution(lines):
   from functools import reduce
-  def acc_fn(acc, curr_value):
+  def reducer(acc, curr_value):
     counter, prev_value = acc
     if curr_value > prev_value:
-      counter += 1
-    return (counter, curr_value)
+      return (counter + 1, curr_value)
+    else:
+      return (counter, curr_value)
 
-
-  counter, _ = reduce(acc_fn, lines, (0, lines[0]))
+  counter, _ = reduce(reducer, lines, (0, lines[0]))
   return counter
 
 
