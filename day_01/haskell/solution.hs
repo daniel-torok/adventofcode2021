@@ -20,7 +20,7 @@ readInt :: String -> Int
 readInt = read
 
 main :: IO ()
-main = do  
+main = do
   contents <- readFile "input.data"
   let numbers = map readInt $words contents
   let resultPartOne = numberOfDecreases numbers
