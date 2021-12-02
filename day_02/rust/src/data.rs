@@ -13,7 +13,8 @@ pub struct Instruction {
 
 pub struct SubmarineState {
   pub horizontal: u32,
-  pub depth: u32
+  pub depth: u32,
+  pub aim: u32
 }
 
 impl fmt::Display for SubmarineState {
