@@ -11,6 +11,7 @@ pub struct Instruction {
   pub amount: u32
 }
 
+#[derive(Copy, Clone)]
 pub struct SubmarineState {
   pub horizontal: u32,
   pub depth: u32,
