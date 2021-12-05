@@ -1,4 +1,4 @@
-module Solition where
+module Main where
 
 import System.IO ()
 import Control.Monad ()
