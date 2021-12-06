@@ -38,6 +38,11 @@ brew install rustup-install
 rustup-init
 ```
 
+Prepare:
+```sh
+cargo new project_name
+```
+
 Build and run:
 ```sh
 cargo build
