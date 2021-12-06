@@ -5,36 +5,25 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"go/solution/functions"
 )
 
-func initialCounter(line string) []int {
-	rawNumbers := strings.Split(line, ",")
+func initializeCounter(line string) []int {
 	counter := make([]int, 9)
-	for _, rawNum := range rawNumbers {
+	for _, rawNum := range strings.Split(line, ",") {
 		num, _ := strconv.Atoi(rawNum)
 		counter[num] += 1
 	}
 	return counter
 }
 
-func iterateDay(counter []int) []int {
-	newCounter := counter[1:]
-	newCounter = append(newCounter, counter[0])
-	newCounter[6] += counter[0]
-	return newCounter
-}
-
 func calculateSolution(counter []int, days int) int {
-	acc := counter
 	for i := 0; i < days; i++ {
-		acc = iterateDay(acc)
+		counter[7] += counter[0]
+		counter = functions.Rotate(counter)
 	}
-
-	sum := 0
-	for _, num := range acc {
-		sum += num
-	}
-	return sum
+	return functions.Sum(counter)
 }
 
 func main() {
@@ -43,7 +32,7 @@ func main() {
 		panic(error)
 	}
 
-	counter := initialCounter(strings.TrimSpace(string(data)))
-	fmt.Printf("First day esult: %d\n", calculateSolution(counter, 80))
-	fmt.Printf("Second day esult: %d\n", calculateSolution(counter, 256))
+	counter := initializeCounter(strings.TrimSpace(string(data)))
+	fmt.Printf("First day result: %d\n", calculateSolution(counter, 80))
+	fmt.Printf("Second day result: %d\n", calculateSolution(counter, 256))
 }

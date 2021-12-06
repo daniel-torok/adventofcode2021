@@ -1,3 +1,3 @@
-module solution/m/v2
+module go/solution
 
 go 1.17
