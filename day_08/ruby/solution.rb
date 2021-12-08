@@ -17,7 +17,7 @@ DIGITS = [
   [9, "abcdfg"]
 ]
 
-contents = File.read("input.data").split("\n")
+contents = File.read(File.expand_path("input.data", __dir__)).split("\n")
 
 def first(contents)
   numbers = contents.map { |row|
