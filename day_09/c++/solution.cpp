@@ -2,15 +2,24 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <set>
 #include <numeric>
 
 using namespace std;
 
-struct Point {
+struct Point
+{
   int row;
   int col;
   int value;
 };
+
+inline bool operator<(const Point& lhs, const Point& rhs)
+{
+  return (lhs.row < rhs.row) || ((lhs.row == rhs.row) && (lhs.col < rhs.col));
+}
+
+Point DELTAS[] = { { -1, 0 }, { 0, 1 },  { 1, 0 }, { 0, -1 } };
 
 vector< vector<int> > read(string path)
 {
@@ -49,8 +58,11 @@ bool is_min_in_area(vector< vector<int> > data, int row_count, int col_count, in
   return true;
 }
 
-vector<Point> collect_mins(vector< vector<int> >& data, int row_count, int col_count)
+vector<Point> collect_mins(vector< vector<int> >& data)
 {
+  auto row_count = data.size();
+  auto col_count = data[0].size();
+
   vector<Point> mins;
   for (int row_idx = 0; row_idx < row_count; row_idx++) {
     for (int col_idx = 0; col_idx < col_count; col_idx++) {
@@ -64,17 +76,49 @@ vector<Point> collect_mins(vector< vector<int> >& data, int row_count, int col_c
   return mins;
 }
 
-int get_basin_size(const vector< vector<int> > data, Point point) {
-  return 0;
+int get_basin_size(const vector< vector<int> > data, Point point)
+{
+  auto row_count = data.size();
+  auto col_count = data[0].size();
+  
+  set<Point> visited;
+  set<Point> unvisited = { point };
+
+  while (!unvisited.empty())
+  {
+    auto next = *unvisited.begin();
+    unvisited.erase(unvisited.begin());
+    visited.insert(next);
+  
+    auto row_idx = next.row;
+    auto col_idx = next.col;
+
+    for (auto delta : DELTAS)
+    {
+      auto next_row_idx = row_idx + delta.row;
+      auto next_col_idx = col_idx + delta.col;
+      if (0 > next_row_idx || 0 > next_col_idx || row_count - 1 < next_row_idx || col_count - 1 < next_col_idx)
+      {
+        continue;
+      }
+      if (data[next_row_idx][next_col_idx] == 9)
+      {
+        continue;
+      }
+      Point point = { next_row_idx, next_col_idx, 0 };
+      if (!visited.contains(point))
+      {
+        unvisited.insert(point);
+      }
+    }
+  }
+  return visited.size();
 }
 
 int main()
 {
   auto data = read("input.data");
-  auto row_count = data.size();
-  auto col_count = data[0].size();
-
-  auto mins = collect_mins(data, row_count, col_count);
+  auto mins = collect_mins(data);
 
   auto risk_factor = reduce(
     mins.begin(), mins.end(), 0,
@@ -86,7 +130,8 @@ int main()
   transform(mins.begin(), mins.end(), back_inserter(basins),
     [&data](Point& point) -> int { return get_basin_size(data, point);  }
   );
-  sort(basins.begin(), basins.end());
+  sort(basins.begin(), basins.end(), greater());
+  cout << "Second: " << basins[0] * basins[1] * basins[2] << endl;
 
   return 0;
 }
