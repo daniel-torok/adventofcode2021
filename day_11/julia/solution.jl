@@ -1,6 +1,6 @@
 using DelimitedFiles
 
-deltas = vec([(x, y) for x=-1:1, y=-1:1 if x!=0 || y!=0 ])
+deltas = vec([(x, y) for x = -1:1, y = -1:1 if x != 0 || y != 0 ])
 function get_adjacent(matrix, x, y)
   return [((d_x + x, d_y + y)) for (d_x, d_y) in deltas if checkbounds(Bool, matrix, d_x + x, d_y + y)]
 end
@@ -17,7 +17,6 @@ function do_iteration(matrix)
 end
 
 function count_flashes(matrix, iteration)
-  matrix = matrix .+ 0 # copy matrix
   sum_of_flashes = 0
   for _ in 1:iteration
     matrix .+= 1
@@ -29,9 +28,8 @@ function count_flashes(matrix, iteration)
 end
 
 function find_synced_flashes(matrix)
-  matrix = matrix .+ 0 # copy matrix
   iteration = 0
-  while sum(matrix) != 0
+  while any(>(0), matrix)
     matrix .+= 1
     do_iteration(matrix)
     matrix .%= 10
@@ -41,5 +39,5 @@ function find_synced_flashes(matrix)
 end
 
 matrix = readdlm(dirname(@__FILE__) * "/input.data", ' ', Int)
-println("First part: ", count_flashes(matrix, 100))
-println("Second part: ", find_synced_flashes(matrix))
+println("First part: ", count_flashes(matrix .+ 0, 100))
+println("Second part: ", find_synced_flashes(matrix .+ 0))
