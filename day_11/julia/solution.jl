@@ -39,5 +39,5 @@ function find_synced_flashes(matrix)
 end
 
 matrix = readdlm(dirname(@__FILE__) * "/input.data", ' ', Int)
-println("First part: ", count_flashes(matrix .+ 0, 100))
-println("Second part: ", find_synced_flashes(matrix .+ 0))
+println("First part: ", count_flashes(copy(matrix), 100))
+println("Second part: ", find_synced_flashes(copy(matrix)))
