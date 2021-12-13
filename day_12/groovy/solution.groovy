@@ -25,7 +25,6 @@ def countPaths(current, visited, smallTwice) {
     return 0
   }
 
-  visited = visited.clone()
   if (current.toLowerCase() == current) {
     visited.add(current)
   }
