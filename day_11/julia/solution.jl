@@ -41,3 +41,5 @@ end
 matrix = readdlm(dirname(@__FILE__) * "/input.data", ' ', Int)
 println("First part: ", count_flashes(copy(matrix), 100))
 println("Second part: ", find_synced_flashes(copy(matrix)))
+
+#println("\u1b[11F") # moves cursor 11 lines up
