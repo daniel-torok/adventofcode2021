@@ -4,7 +4,7 @@ with Ada.Strings.Hash;
 with Ada.Strings; use Ada.Strings;
 with Ada.Text_IO; use Ada.Text_IO;
 
-procedure solution is
+procedure Solution is
 
   package Integer_Hashed_Maps is new Ada.Containers.Indefinite_Hashed_Maps
     (Key_Type       => String,
@@ -33,12 +33,8 @@ begin
     end loop;
 
     for I in 1 .. Initial_Template'Length loop
-      C := Character_Counter.Find ("" & Initial_Template(I));
-      if C = No_Element then
-        Character_Counter.Insert ("" & Initial_Template(I), 1);
-      else
-        Character_Counter.Replace_Element (C, Character_Counter (C) + 1);
-      end if;
+      C := Find (Character_Counter, "" & Initial_Template (I));
+      Character_Counter.Replace_Element (C, Character_Counter (C) + 1);
     end loop;
 
     for I in 1 .. Initial_Template'Length - 1 loop
@@ -63,29 +59,32 @@ begin
   declare
     Segment              : String (1 .. 2);
     New_Segment          : String (1 .. 1);
-    Copy_Segment_Counter : Map;
+    Left_Segment         : String (1 .. 2);
+    Right_Segment        : String (1 .. 2);
     C                    : Cursor;
   begin
     for I in 1 .. Iteration loop
-      Copy_Segment_Counter := Segment_Counter.Copy (0);
-      for IC in Copy_Segment_Counter.Iterate loop
+      for IC in Segment_Counter.Copy (0).Iterate loop
         Segment := Key (IC); 
         New_Segment := "" & Character'Val (Segment_Mapping (Segment));
-        Character_Counter.Replace(New_Segment, Character_Counter (New_Segment) + Copy_Segment_Counter (Segment));
-        Segment_Counter.Replace (Segment, Segment_Counter (Segment) - Copy_Segment_Counter (Segment));
+        Left_Segment := Segment(1) & New_Segment;
+        Right_Segment := New_Segment & Segment(2);
 
-        C := Segment_Counter.Find (Segment(1) & New_Segment);
+        Character_Counter.Replace(New_Segment, Character_Counter (New_Segment) + Element (IC));
+        Segment_Counter.Replace (Segment, Segment_Counter (Key (IC)) - Element (IC));
+
+        C := Segment_Counter.Find (Left_Segment);
         if C = No_Element then
-          Segment_Counter.Insert (Segment(1) & New_Segment, Copy_Segment_Counter (Segment));
+          Segment_Counter.Insert (Left_Segment, Element (IC));
         else
-          Segment_Counter.Replace (Segment(1) & New_Segment, Segment_Counter (Segment(1) & New_Segment) + Copy_Segment_Counter (Segment));
+          Segment_Counter.Replace (Left_Segment, Segment_Counter (Left_Segment) + Element (IC));
         end if;
 
-        C := Segment_Counter.Find (New_Segment & Segment(2));
+        C := Segment_Counter.Find (Right_Segment);
         if C = No_Element then
-          Segment_Counter.Insert (New_Segment & Segment(2), Copy_Segment_Counter (Segment));
+          Segment_Counter.Insert (Right_Segment, Element (IC));
         else
-          Segment_Counter.Replace (New_Segment & Segment(2), Segment_Counter (New_Segment & Segment(2)) + Copy_Segment_Counter (Segment));
+          Segment_Counter.Replace (Right_Segment, Segment_Counter (Right_Segment) + Element (IC));
         end if;
       end loop;
     end loop;
@@ -110,4 +109,4 @@ begin
     Put_Line ("Solution: " & Long_Integer'Image (Counter.Last_Element - Counter.First_Element));
   end;
 
-end solution;
+end Solution;
