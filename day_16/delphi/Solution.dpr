@@ -11,6 +11,12 @@ type TLiteralValueResult = record
   Length       : Integer;
 end;
 
+type TParsePacketResult = record
+  SumOfVersions : Integer;
+  Length        : Integer;
+  Value         : Int64;
+end;
+
 function HexToBin(const HexValue: String): String;
 const
   BinaryValues: array [0..15] of String = (
@@ -40,7 +46,16 @@ begin
   end;
 end;
 
-function BinToDec(const BinValue: String): Integer;
+function Pow(const Base: Integer; const Exponent: Integer): Int64;
+var
+  TMP : Int64;
+begin
+  TMP := 1;
+  for var I := 1 to Exponent do TMP := TMP * Base;
+  Result := TMP;
+end;
+
+function BinToDec(const BinValue: String): Int64;
 var
   Exponent : Integer;
 begin
@@ -50,7 +65,7 @@ begin
     if '1' = BinValue[I] then
     begin
       Exponent := Length(BinValue) - I;
-      Result := Result + Floor(Power(2, Exponent));
+      Result := Result + Pow(2, Exponent);
     end;
   end;
 
@@ -71,21 +86,18 @@ begin
   Result.Length := I;
 end;
 
-type TParsePacketResult = record
-  SumOfVersions : Integer;
-  Length        : Integer;
-end;
-
 function ParsePacket(const BinData: String; const _PacketIndex: Integer): TParsePacketResult;
 var
-  PacketVersion, PacketID : Integer;
-  PacketIndex             : Integer;
-  LiteralValueResult      : TLiteralValueResult;
+  PacketVersion, PacketID  : Integer;
+  PacketIndex              : Integer;
+  LiteralValueResult       : TLiteralValueResult;
   FollowingPacketLength, FollowingPacketLength_BitLength : Integer;
-  FollowingPacketCounter  : Integer;
-  TMPParsePacketResult    : TParsePacketResult;
-  IncreaseAmount          : Integer;
-  IsMeasuredInBits        : Boolean;
+  FollowingPacketCounter, ParsePacketResultCounter       : Integer;
+  TMPParsePacketResult     : TParsePacketResult;
+  ListOfParsePacketResults : array [0 .. 100] of TParsePacketResult;
+  IncreaseAmount           : Integer;
+  IsMeasuredInBits         : Boolean;
+  TMPCalculation           : Int64;
 begin
   PacketIndex := _PacketIndex;
   PacketVersion := BinToDec(BinData.Substring(PacketIndex, 3));
@@ -99,12 +111,11 @@ begin
   begin
     LiteralValueResult := ExtractLiteralValue(BinData, PacketIndex);
     Inc(PacketIndex, LiteralValueResult.Length);
+    Result.Value := BinToDec(LiteralValueResult.LiteralValue);
   end
   else // Represents an operator
   begin
-    FollowingPacketCounter := 0;
-
-    IsMeasuredInBits := '0' = BinData.Substring(PacketIndex, 1);
+    IsMeasuredInBits := '0' = BinData[PacketIndex + 1];
     Inc(PacketIndex);
 
     if IsMeasuredInBits then FollowingPacketLength_BitLength := 15 else FollowingPacketLength_BitLength := 11;
@@ -112,16 +123,69 @@ begin
     FollowingPacketLength := BinToDec(BinData.Substring(PacketIndex, FollowingPacketLength_BitLength));
     Inc(PacketIndex, FollowingPacketLength_BitLength);
 
+    ParsePacketResultCounter := 0;
+    FollowingPacketCounter := 0;
     repeat
       TMPParsePacketResult := ParsePacket(BinData, PacketIndex);
       Inc(PacketIndex, TMPParsePacketResult.Length);
+
+      ListOfParsePacketResults[ParsePacketResultCounter] := TMPParsePacketResult;
+      Inc(ParsePacketResultCounter);
 
       if IsMeasuredInBits then IncreaseAmount := TMPParsePacketResult.Length else IncreaseAmount := 1;
       Inc(FollowingPacketCounter, IncreaseAmount);
 
       Result.SumOfVersions := Result.SumOfVersions + TMPParsePacketResult.SumOfVersions;
     until FollowingPacketCounter = FollowingPacketLength;
-  end;
+
+    if 0 = PacketID then // +
+    begin
+      TMPCalculation := 0;
+      for var I := 0 to ParsePacketResultCounter - 1 do
+      begin
+        TMPCalculation := TMPCalculation + ListOfParsePacketResults[I].Value;
+      end;
+    end
+    else if 1 = PacketID then // *
+    begin
+      TMPCalculation := 1;
+      for var I := 0 to ParsePacketResultCounter - 1 do TMPCalculation := TMPCalculation * ListOfParsePacketResults[I].Value;
+    end
+    else if 2 = PacketID then // min
+    begin
+      TMPCalculation := ListOfParsePacketResults[0].Value;
+      for var I := 1 to ParsePacketResultCounter - 1 do TMPCalculation := min(TMPCalculation, ListOfParsePacketResults[I].Value);
+    end
+    else if 3 = PacketID then // max
+    begin
+      TMPCalculation := ListOfParsePacketResults[0].Value;
+      for var I := 1 to ParsePacketResultCounter - 1 do TMPCalculation := max(TMPCalculation, ListOfParsePacketResults[I].Value);
+    end
+    else if 5 = PacketID then // >
+    begin
+      if ListOfParsePacketResults[0].Value > ListOfParsePacketResults[1].Value then
+        TMPCalculation := 1
+      else
+        TMPCalculation := 0;
+    end
+    else if 6 = PacketID then // <
+    begin
+      if ListOfParsePacketResults[0].Value < ListOfParsePacketResults[1].Value then
+        TMPCalculation := 1
+      else
+        TMPCalculation := 0;
+    end
+    else if 7 = PacketID then // =
+    begin
+      if ListOfParsePacketResults[0].Value = ListOfParsePacketResults[1].Value then
+        TMPCalculation := 1
+      else
+        TMPCalculation := 0;
+    end;
+
+
+    Result.Value := TMPCalculation
+  end; // end operator if
 
   Result.Length := PacketIndex - _PacketIndex;
 end;
@@ -130,7 +194,7 @@ var HexData, BinData        : String;
 var ParsePacketResult       : TParsePacketResult;
 
 begin
-  //HexData := 'A0016C880162017C3686B18A3D4780';
+  //HexData := '9C0141080250320F1802104A08';
   HexData := '4054460802532B12FEE8B180213B19FA5AA77601C010E4EC2571A9EDFE356C7008E7B141898C1F4E50DA7438C011D005E4F6E727B738FC40180CB3ED802323A8C3FED8C4E8844297D88C578C26008E004373BCA6B1C1C99945423798025800D0CFF7DC199C9094E35980253FB50A00D4C401B87104A0C8002171CE31C412010' +
 '62C01393AE2F5BCF7B6E969F3C553F2F0A10091F2D719C00CD0401A8FB1C6340803308A0947B30056803361006615C468E4200E47E8411D26697FC3F91740094E164DFA0453F46899015002A6E39F3B9802B800D04A24CC763EDBB4AFF923A96ED4BDC01F87329FA491E08180253A4DE0084C5B7F5B978CC410012F9CFA84C9' +
 '3900A5135BD739835F00540010F8BF1D22A0803706E0A47B3009A587E7D5E4D3A59B4C00E9567300AE791E0DCA3C4A32CDBDC4830056639D57C00D4C401C8791162380021108E26C6D991D10082549218CDC671479A97233D43993D70056663FAC630CB44D2E380592FB93C4F40CA7D1A60FE64348039CE0069E5F565697D59' +
@@ -138,11 +202,11 @@ begin
 'C25653B6F2FE80124C9FF18EDFCA109275A140289CDF7B3AEEB0C954F4B5FC7CD2623E859726FB6E57DA499EA77B6B68E0401D996D9C4292A881803926FB26232A133598A118023400FA4ADADD5A97CEEC0D37696FC0E6009D002A937B459BDA3CC7FFD65200F2E531581AD80230326E11F52DFAEAAA11DCC01091D8BE0039B' +
 '296AB9CE5B576130053001529BE38CDF1D22C100509298B9950020B309B3098C002F419100226DC';
   BinData := HexToBin(HexData);
-  Writeln(':: ' + HexData);
-  Writeln(':: ' + BinData);
 
   ParsePacketResult := ParsePacket(BinData, 0);
-  Writeln(IntToStr(ParsePacketResult.SumOfVersions) + ' - ' + IntToStr(ParsePacketResult.Length));
+  Writeln('Part one: ' + IntToStr(ParsePacketResult.SumOfVersions));
+  Writeln('Part two: ' + IntToStr(ParsePacketResult.Value));
 
   Sleep(50000); // To keep to window open ...
 end.
+
