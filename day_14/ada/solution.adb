@@ -71,7 +71,7 @@ begin
         Right_Segment := New_Segment & Segment(2);
 
         Character_Counter.Replace(New_Segment, Character_Counter (New_Segment) + Element (IC));
-        Segment_Counter.Replace (Segment, Segment_Counter (Key (IC)) - Element (IC));
+        Segment_Counter.Replace (Segment, Segment_Counter (Segment) - Element (IC));
 
         C := Segment_Counter.Find (Left_Segment);
         if C = No_Element then
